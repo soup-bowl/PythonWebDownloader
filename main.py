@@ -36,37 +36,34 @@ for link_tag in soup.find_all('a'):
         zip_url = urljoin(args.url, href)
         zip_urls.append(zip_url)
 
-# Print or download resources based on --dry-run flag
-if args.dry_run:
-    print("Image URLs:")
-    for img_url in image_urls:
-        print(img_url)
+# Create a directory to save the downloaded files
+if not os.path.exists('downloads'):
+    os.makedirs('downloads')
 
-    print("Zip file URLs:")
-    for zip_url in zip_urls:
-        print(zip_url)
-else:
-    # Create a directory to save the downloaded files
-    if not os.path.exists('downloads'):
-        os.makedirs('downloads')
+# Check for existing files before downloading
+downloaded_files = os.listdir('downloads')
+existing_filenames = set([filename.lower() for filename in downloaded_files])
 
-    # Download images
-    for img_url in image_urls:
-        img_filename = os.path.join('downloads', os.path.basename(img_url))
-        download_file(img_url, img_filename)
-        print(f"Downloaded image: {img_url}")
+# Download images
+for img_url in image_urls:
+    img_filename = os.path.basename(img_url)
+    if img_filename.lower() not in existing_filenames:
+        if args.dry_run:
+            print(f"Image would be downloaded: {img_url}")
+        else:
+            img_save_path = os.path.join('downloads', img_filename)
+            download_file(img_url, img_save_path)
+            print(f"Downloaded image: {img_url}")
 
-    # Download zip files
-    for zip_url in zip_urls:
-        zip_filename = os.path.join('downloads', os.path.basename(zip_url))
-        download_file(zip_url, zip_filename)
-        print(f"Downloaded zip file: {zip_url}")
+# Download zip files
+for zip_url in zip_urls:
+    zip_filename = os.path.basename(zip_url)
+    if zip_filename.lower() not in existing_filenames:
+        if args.dry_run:
+            print(f"Zip file would be downloaded: {zip_url}")
+        else:
+            zip_save_path = os.path.join('downloads', zip_filename)
+            download_file(zip_url, zip_save_path)
+            print(f"Downloaded zip file: {zip_url}")
 
-    # Extract zip files
-    for zip_filename in os.listdir('downloads'):
-        if zip_filename.lower().endswith('.zip'):
-            with zipfile.ZipFile(os.path.join('downloads', zip_filename), 'r') as zip_ref:
-                zip_ref.extractall('downloads')
-                print(f"Extracted contents of {zip_filename}")
-
-    print("Download and extraction completed.")
+print("Download and extraction completed.")
